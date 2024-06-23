@@ -9,15 +9,16 @@ Json: TypeAlias = str
 
 
 class Parser:
+
     def __init__(self, swagger_info: dict):
         self.swagger_info = swagger_info
 
 
-class Surrogate:
+class SwaggerLoader:
+
     def __init__(self, url):
         self._client = AsyncClient
         self.url = url
-        self.file = 'openapi.json'
 
     @staticmethod
     def _jsonValidate(response):
@@ -26,7 +27,11 @@ class Surrogate:
         except JSONDecodeError:
             return None
 
-    async def response(self) -> Json:
+    @staticmethod
+    def serialize(swagger_info: Json) -> dict:
+        return json.loads(swagger_info)
+
+    async def _response(self) -> Json:
         async with self._client() as client:
             response = await client.get(self.url)
             json_data = self._jsonValidate(response)
@@ -34,44 +39,54 @@ class Surrogate:
                 raise RuntimeError(f"Can't get data from {self.url}")
             return json_data
 
+    async def get(self):
+        swagger_info: Json = await self._response()
+        return self.serialize(swagger_info)
+
+
+class ProxyLoader(SwaggerLoader):
+
+    def __init__(self, url):
+        super().__init__(url)
+        self.file = 'openapi.json'
+
     def save_to_file(self, json_info: Json) -> None:
         with open(self.file, 'w') as f:
             json.dump(json_info, f)
 
-    def load_from_file(self) -> dict:
+    def load_from_file(self) -> dict | None:
         try:
             with open(self.file) as f:
                 return json.load(f)
         except FileNotFoundError:
             return None
 
-    def serialize(self, swagger_info: Json) -> dict:
-        return json.dumps(swagger_info)
-
     async def get(self):
         swagger_info: dict = self.load_from_file()
         if not swagger_info:
-            swagger_info: Json = await self.response()
+            swagger_info: Json = await self._response()
             self.save_to_file(swagger_info)
             swagger_info = self.serialize(swagger_info)
         return swagger_info
 
 
 class Swagger:
-    def __init__(self, url='http://127.0.0.1:8000/openapi.json'):
-        self.url = url
-        self._proxy = Surrogate(url)
+
+    def __init__(self, loader: SwaggerLoader):
+        self._loader = loader
 
     async def get(self) -> dict:
-        return await self._proxy.get()
+        return await self._loader.get()
 
     async def parse(self, parser: Parser):
-        swagger_info = await self._proxy.get()
+        swagger_info = await self._loader.get()
         return Parser(swagger_info)
 
 
 async def main():
-    swagger = Swagger()
+    url = 'http://127.0.0.1:8000/openapi.json'
+    proxy_json = ProxyLoader(url)
+    swagger = Swagger(proxy_json)
     swagger_info = await swagger.get()
     print(swagger_info)
     paths = swagger_info['paths']
