@@ -1,5 +1,6 @@
 import json
 from json import JSONDecodeError
+from typing import TypeAlias
 
 from httpx import AsyncClient
 
