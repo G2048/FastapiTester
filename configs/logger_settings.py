@@ -2,10 +2,12 @@ import json
 import logging.config
 import re
 
-DEBUG = 'DEBUG'
+from configs import AppSettings
+
+settings = AppSettings()
 COUNTER = 0
-LOG_LEVEL = DEBUG or 'INFO'
-SQL_LEVEL = DEBUG or 'WARNING'
+LOG_LEVEL = settings.DEBUG or 'INFO'
+SQL_LEVEL = settings.DEBUG or 'WARNING'
 
 
 class JSONFormatter(logging.Formatter):
@@ -18,8 +20,8 @@ class JSONFormatter(logging.Formatter):
 
         COUNTER += 1
         logger_name: str = values['name']
-        ready_message['app.name'] = 'appname'.lower()
-        ready_message['app.version'] = '1.0.0'
+        ready_message['app.name'] = settings.name
+        ready_message['app.version'] = settings.version
         ready_message['app.logger'] = logger_name
         ready_message['time'] = self.formatTime(record, self.datefmt)
         ready_message['level'] = values.get('levelname')

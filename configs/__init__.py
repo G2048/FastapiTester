@@ -1,1 +1,1 @@
-from .settings import get_logger
+from .settings import AppSettings, get_logger
