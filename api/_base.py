@@ -43,13 +43,13 @@ class BaseApi:
                 if response_json:
                     return response_json
 
-        @property
-        def status_code(self) -> int | None:
-            return self._status_code
+    @property
+    def status_code(self) -> int | None:
+        return self._status_code
 
-        @status_code.setter
-        def status_code(self, value) -> None:
-            self._status_code = value
+    @status_code.setter
+    def status_code(self, value) -> None:
+        self._status_code = value
 
     @staticmethod
     def serialize(data: Json) -> dict:
