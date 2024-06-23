@@ -1,12 +1,17 @@
+import json
 from json import JSONDecodeError
 
-from configs import get_logger
 from httpx import AsyncClient
+
+from configs import get_logger
 
 logger = get_logger()
 
+Json: TypeAlias = str
+
 
 class BaseApi:
+
     def __init__(self, url):
         self.HEADERS = {'Content-Type': 'application/json'}
         self.URL = url
@@ -44,6 +49,10 @@ class BaseApi:
         @status_code.setter
         def status_code(self, value) -> None:
             self._status_code = value
+
+    @staticmethod
+    def serialize(data: Json) -> dict:
+        return json.loads(data)
 
 
 async def test():
